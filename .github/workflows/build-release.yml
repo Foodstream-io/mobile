@@ -5,10 +5,59 @@ on:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      skip_build:
+        description: 'Skip build and use existing artifact'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+  packages: write
 
 jobs:
-  build:
+  check-changes:
     runs-on: ubuntu-latest
+    outputs:
+      should-build: ${{ steps.check.outputs.should-build }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
+
+      - name: Check if should skip build
+        id: check
+        run: |
+          # Manual override via workflow_dispatch
+          if [[ "${{ github.event.inputs.skip_build }}" == "true" ]]; then
+            echo "Manual skip requested"
+            echo "should-build=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          # Auto-detect if only workflow files changed
+          if [[ "${{ github.event_name }}" == "push" ]]; then
+            CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD)
+            echo "Changed files: $CHANGED_FILES"
+            
+            if echo "$CHANGED_FILES" | grep -v '^\.github/workflows/' | grep -q .; then
+              echo "Non-workflow files changed, need to build"
+              echo "should-build=true" >> $GITHUB_OUTPUT
+            else
+              echo "Only workflow files changed, skipping build"
+              echo "should-build=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "Workflow dispatch without skip_build, building"
+            echo "should-build=true" >> $GITHUB_OUTPUT
+          fi
+
+  build:
+    needs: check-changes
+    runs-on: ubuntu-latest
+    if: needs.check-changes.outputs.should-build == 'true'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -29,10 +78,12 @@ jobs:
         with:
           name: app-release-apk
           path: build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 30
 
   release:
-    needs: build
+    needs: [check-changes, build]
     runs-on: ubuntu-latest
+    if: always() && (needs.build.result == 'success' || needs.build.result == 'skipped')
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -41,11 +92,21 @@ jobs:
         id: tag
         run: echo "tag=v$(date +'%Y.%m.%d')-$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_OUTPUT
 
-      - name: Download APK artifact
+      - name: Download APK from current build
+        if: needs.build.result == 'success'
         uses: actions/download-artifact@v4
         with:
           name: app-release-apk
           path: ./
+
+      - name: Download APK from previous successful build
+        if: needs.build.result == 'skipped'
+        uses: dawidd6/action-download-artifact@v3
+        with:
+          workflow: build-release.yml
+          name: app-release-apk
+          path: ./
+          if_no_artifact_found: fail
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -59,6 +120,7 @@ jobs:
             - Built from commit: ${{ github.sha }}
             - Flutter version: 3.29.0
             - Supports: ARM, ARM64, x64 architectures
+            ${{ needs.build.result == 'skipped' && '- ⚠️ Using APK from previous successful build' || '' }}
           files: app-release.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
