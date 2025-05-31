@@ -5,15 +5,15 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Food Stream</string>
+	<string>FoodStream</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
-	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<string>com.foodstream.mobile</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>food_stream</string>
+	<string>foodstream_mobile</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -45,5 +45,13 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>MinimumOSVersion</key>
+	<string>12.0</string>
+	
+	<!-- Add permissions for your live streaming features -->
+	<key>NSCameraUsageDescription</key>
+	<string>This app needs camera access for live streaming food preparation.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>This app needs microphone access for live streaming audio.</string>
 </dict>
 </plist>

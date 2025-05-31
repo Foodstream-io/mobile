@@ -1,4 +1,4 @@
-package com.example.food_stream
+package com.foodstream.mobile
 
 import io.flutter.embedding.android.FlutterActivity
 

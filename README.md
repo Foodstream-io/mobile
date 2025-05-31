@@ -1,16 +1,63 @@
-# food_stream
+# FoodStream
 
-A new Flutter project.
+A Flutter mobile application for live streaming food preparation and cooking experiences.
+
+## Features
+
+- 📱 **Live Streaming**: Real-time video streaming using WebRTC technology
+- 🍔 **Food Focus**: Specialized for food and cooking content
+- 👥 **Host & Viewer Modes**: Create streams or join existing ones
+- 🔐 **User Authentication**: Secure login system
+- 📊 **Stream Management**: Room creation and joining functionality
+
+## Technical Stack
+
+- **Framework**: Flutter 3.16+ with Dart 3.0+
+- **Streaming**: WebRTC via `flutter_webrtc` and `livekit_client`
+- **Backend**: Socket.IO for signaling
+- **Platforms**: Android (API 21+) & iOS
+- **Architecture**: Modern Android (API 35) with Java 17
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+### Prerequisites
 
-A few resources to get you started if this is your first Flutter project:
+- Flutter 3.16 or higher
+- Android Studio with Android SDK 35
+- Xcode (for iOS development)
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+### Installation
+
+```bash
+# Clone the repository
+git clone <your-repo-url>
+cd foodstream/mobile
+
+# Install dependencies
+flutter pub get
+
+# Run on Android
+flutter run
+
+# Build release APK
+flutter build apk --release
+```
+
+### Features in Development
+
+- Real-time chat during streams
+- Stream recording and playback
+- User profiles and favorites
+- Stream discovery and search
+
+## Architecture
+
+This app uses:
+
+- **SignalingService** for WebRTC connection management
+- **LiveStreamPage** for streaming interface
+- **Modern Android** configuration with ProGuard optimization
+- **Responsive UI** with Material Design 3
 
 For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+[online documentation](https://docs.flutter.dev/).

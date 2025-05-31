@@ -7,8 +7,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:food_stream/drawer.dart';
+import 'package:foodstream_mobile/drawer.dart';
 
 void main() {
   testWidgets('AppDrawer test', (WidgetTester tester) async {
@@ -26,6 +25,5 @@ void main() {
 
     await tester.tap(find.text('Friends'));
     await tester.pump();
-
   });
 }
