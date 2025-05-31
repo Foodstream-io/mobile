@@ -46,8 +46,28 @@ jobs:
               echo "Non-workflow files changed, need to build"
               echo "should-build=true" >> $GITHUB_OUTPUT
             else
-              echo "Only workflow files changed, skipping build"
-              echo "should-build=false" >> $GITHUB_OUTPUT
+              echo "Only workflow files changed, checking for previous artifacts..."
+              # Check if previous successful run with artifacts exists
+              PREV_RUN=$(curl -s -H "Authorization: Bearer ${{ github.token }}" \
+                "https://api.github.com/repos/${{ github.repository }}/actions/workflows/build-release.yml/runs?status=success&per_page=1" \
+                | jq -r '.workflow_runs[0].id // empty')
+              
+              if [[ -n "$PREV_RUN" ]]; then
+                ARTIFACTS=$(curl -s -H "Authorization: Bearer ${{ github.token }}" \
+                  "https://api.github.com/repos/${{ github.repository }}/actions/runs/$PREV_RUN/artifacts" \
+                  | jq -r '.artifacts[] | select(.name=="app-release-apk") | .id // empty')
+                
+                if [[ -n "$ARTIFACTS" ]]; then
+                  echo "Previous artifacts found, skipping build"
+                  echo "should-build=false" >> $GITHUB_OUTPUT
+                else
+                  echo "No previous artifacts found, need to build"
+                  echo "should-build=true" >> $GITHUB_OUTPUT
+                fi
+              else
+                echo "No previous successful runs found, need to build"
+                echo "should-build=true" >> $GITHUB_OUTPUT
+              fi
             fi
           else
             echo "Workflow dispatch without skip_build, building"
@@ -109,6 +129,7 @@ jobs:
           if_no_artifact_found: fail
 
       - name: Create GitHub Release
+        if: needs.build.result == 'success' || needs.build.result == 'skipped'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.tag.outputs.tag }}

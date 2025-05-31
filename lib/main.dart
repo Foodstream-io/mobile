@@ -64,45 +64,45 @@ class MyAppState extends State<MyApp> {
     });
   }
 
-Widget _buildMainScaffold() {
-  return Scaffold(
-    drawer: const AppDrawer(),
-    bottomNavigationBar: AppNavigationBar(
-      selectedIndex: _selectedIndex,
-      onDestinationSelected: _onItemTapped,
-      destinations: [
-        NavigationDestination(
-          icon: const Icon(Icons.restaurant_menu_outlined),
-          selectedIcon: const Icon(Icons.restaurant_menu),
-          label: 'Plats',
-        ),
-        NavigationDestination(
-          icon: const Icon(Icons.favorite_border),
-          selectedIcon: const Icon(Icons.favorite),
-          label: 'Favoris',
-        ),
-        NavigationDestination(
-          icon: const Icon(Icons.home_outlined),
-          selectedIcon: const Icon(Icons.home),
-          label: 'Home',
-        ),
-        NavigationDestination(
-          icon: const Icon(Icons.help_outline),
-          selectedIcon: const Icon(Icons.help),
-          label: 'Help',
-        ),
-        NavigationDestination(
-          icon: const Icon(Icons.person_outline),
-          selectedIcon: const Icon(Icons.person),
-          label: 'Profile',
-        ),
-      ],
-    ),
-    appBar: AppBar(
-      title: const Text('FoodStream'),
-      centerTitle: true,
-    ),
-    body: _getPageForIndex(_selectedIndex),
-  );
-}
+  Widget _buildMainScaffold() {
+    return Scaffold(
+      drawer: const AppDrawer(),
+      bottomNavigationBar: AppNavigationBar(
+        selectedIndex: _selectedIndex,
+        onDestinationSelected: _onItemTapped,
+        destinations: [
+          NavigationDestination(
+            icon: const Icon(Icons.restaurant_menu_outlined),
+            selectedIcon: const Icon(Icons.restaurant_menu),
+            label: 'Plats',
+          ),
+          NavigationDestination(
+            icon: const Icon(Icons.favorite_border),
+            selectedIcon: const Icon(Icons.favorite),
+            label: 'Favoris',
+          ),
+          NavigationDestination(
+            icon: const Icon(Icons.home_outlined),
+            selectedIcon: const Icon(Icons.home),
+            label: 'Home',
+          ),
+          NavigationDestination(
+            icon: const Icon(Icons.help_outline),
+            selectedIcon: const Icon(Icons.help),
+            label: 'Help',
+          ),
+          NavigationDestination(
+            icon: const Icon(Icons.person_outline),
+            selectedIcon: const Icon(Icons.person),
+            label: 'Profile',
+          ),
+        ],
+      ),
+      appBar: AppBar(
+        title: const Text('FoodStream'),
+        centerTitle: true,
+      ),
+      body: _getPageForIndex(_selectedIndex),
+    );
+  }
 }
