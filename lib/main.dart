@@ -24,7 +24,7 @@ class MyAppState extends State<MyApp> {
   int _selectedIndex = 2;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) { 
     return MaterialApp(
       title: 'FoodStream',
       theme: ThemeData(
