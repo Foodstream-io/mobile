@@ -1,0 +1,25 @@
+services:
+  flutter-dev:
+    build: .
+    container_name: foodstream-mobile-dev
+    volumes:
+      - .:/app
+      - flutter-cache:/opt/flutter-cache
+      - pub-cache:/opt/pub-cache
+      - gradle-cache:/opt/gradle-cache
+    ports:
+      - "3000:3000" # For Flutter web
+      - "8080:8080" # Additional port if needed
+    environment:
+      - FLUTTER_WEB_PORT=3000
+      - FLUTTER_WEB_HOSTNAME=0.0.0.0
+      - PUB_CACHE=/opt/pub-cache
+      - FLUTTER_ROOT=/home/flutter/flutter
+    working_dir: /app
+    tty: true
+    stdin_open: true
+
+volumes:
+  flutter-cache:
+  pub-cache:
+  gradle-cache:
