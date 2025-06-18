@@ -98,22 +98,35 @@ jobs:
         run: flutter pub get
 
       - name: Build release APK
-        run: flutter build apk --release --target-platform android-arm,android-arm64,android-x64
+        run: flutter build apk --release --split-per-abi
 
-      - name: List build outputs (for debugging)
+      - name: List all build outputs (detailed debugging)
         run: |
-          echo "Checking build outputs:"
-          find build/ -name "*.apk" -type f || echo "No APKs in build/"
-          find android/ -name "*.apk" -type f || echo "No APKs in android/"
+          echo "=== Build directory structure ==="
+          find build/ -type f -name "*.apk" 2>/dev/null || echo "No APKs in build/"
+          echo ""
+          echo "=== Android directory structure ==="
+          find android/ -type f -name "*.apk" 2>/dev/null || echo "No APKs in android/"
+          echo ""
+          echo "=== All APK files in workspace ==="
+          find . -type f -name "*.apk" 2>/dev/null || echo "No APK files found anywhere"
+          echo ""
+          echo "=== Flutter build output structure ==="
+          ls -la build/app/outputs/ 2>/dev/null || echo "No build/app/outputs directory"
 
       - name: Copy APK to expected location
         run: |
-          mkdir -p build/app/outputs/flutter-apk/
-          if [ -f "android/app/build/outputs/apk/release/app-release.apk" ]; then
-            cp android/app/build/outputs/apk/release/app-release.apk build/app/outputs/flutter-apk/app-release.apk
-            echo "APK copied successfully"
+          # For split-per-abi builds, APKs are always in android/app/build/outputs/apk/release/
+          if [ -f "android/app/build/outputs/apk/release/app-arm64-v8a-release.apk" ]; then
+            echo "Found split APKs, using ARM64 version as main APK"
+            cp android/app/build/outputs/apk/release/app-arm64-v8a-release.apk ./app-release.apk
+          elif [ -f "android/app/build/outputs/apk/release/app-release.apk" ]; then
+            echo "Found universal APK"
+            cp android/app/build/outputs/apk/release/app-release.apk ./app-release.apk
           else
             echo "APK not found at expected location"
+            echo "Available files:"
+            find . -name "*.apk" -type f
             exit 1
           fi
 
@@ -121,7 +134,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: app-release-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+          path: ./app-release.apk
           retention-days: 30
 
   release:

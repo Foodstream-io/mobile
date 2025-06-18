@@ -3,8 +3,13 @@ FROM ubuntu:22.04
 # Avoid interactive prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive
 
+# Accept build arguments for user ID
+ARG USER_ID=1000
+ARG GROUP_ID=1000
+
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
+    cmake \
     curl \
     git \
     libglu1-mesa \
@@ -21,8 +26,9 @@ RUN apt-get update && apt-get install -y \
 ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
 ENV PATH=$PATH:$JAVA_HOME/bin
 
-# Create flutter user and cache directories
-RUN useradd -m -u 1000 -s /bin/bash flutter && \
+# Create flutter user with matching host user ID
+RUN groupadd -g ${GROUP_ID} flutter && \
+    useradd -m -u ${USER_ID} -g ${GROUP_ID} -s /bin/bash flutter && \
     echo "flutter ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers && \
     mkdir -p /opt/flutter-cache /opt/pub-cache /opt/gradle-cache && \
     chown -R flutter:flutter /opt/flutter-cache /opt/pub-cache /opt/gradle-cache
@@ -48,9 +54,10 @@ RUN mkdir -p "$ANDROID_HOME" && \
     "build-tools;31.0.0" \
     "build-tools;34.0.0" \
     "build-tools;35.0.0" \
-    "ndk;27.0.12077973"
+    "ndk;27.0.12077973" \
+    "cmake;3.22.1"
 
-# Install Flutter as root initially
+# Install Flutter
 ENV FLUTTER_HOME=/opt/flutter
 ENV PATH=$PATH:$FLUTTER_HOME/bin
 ENV PUB_CACHE=/opt/pub-cache
@@ -64,36 +71,44 @@ RUN git clone https://github.com/flutter/flutter.git -b stable "$FLUTTER_HOME" &
 USER flutter
 WORKDIR /home/flutter
 
-# Configure Flutter and add safe directory for flutter user too
+# Configure Flutter
 RUN git config --global --add safe.directory "$FLUTTER_HOME" && \
     flutter config --android-sdk "$ANDROID_HOME" && \
     flutter doctor
 
-# Create a startup script to handle permissions
+# Create entrypoint script as root
 USER root
 RUN echo '#!/bin/bash\n\
+    set -e\n\
+    \n\
+    # Fix ownership of mounted volumes and create necessary directories\n\
     chown -R flutter:flutter /app 2>/dev/null || true\n\
+    chown -R flutter:flutter /opt/pub-cache 2>/dev/null || true\n\
+    chown -R flutter:flutter /opt/gradle-cache 2>/dev/null || true\n\
+    \n\
+    # Ensure all parent directories exist and have correct permissions\n\
+    mkdir -p /app/android/app/build/intermediates/flutter/release 2>/dev/null || true\n\
+    mkdir -p /app/android/app/build/outputs 2>/dev/null || true\n\
+    mkdir -p /app/build/app/outputs 2>/dev/null || true\n\
+    chown -R flutter:flutter /app/android/app/build 2>/dev/null || true\n\
+    chown -R flutter:flutter /app/build 2>/dev/null || true\n\
+    \n\
+    # Ensure git safe directories\n\
     git config --global --add safe.directory /opt/flutter 2>/dev/null || true\n\
-    exec sudo -u flutter "$@"' > /usr/local/bin/entrypoint.sh && \
+    sudo -u flutter git config --global --add safe.directory /opt/flutter 2>/dev/null || true\n\
+    \n\
+    # If no command is provided, start bash as flutter user\n\
+    if [ $# -eq 0 ]; then\n\
+    exec sudo -u flutter bash\n\
+    else\n\
+    exec sudo -u flutter "$@"\n\
+    fi' > /usr/local/bin/entrypoint.sh && \
     chmod +x /usr/local/bin/entrypoint.sh
 
-# Create working directory and set proper ownership
+# Set working directory
 WORKDIR /app
-RUN chown -R flutter:flutter /app
 
-# Copy pubspec files first for better caching
-COPY --chown=flutter:flutter pubspec.yaml pubspec.lock ./
-
-# Switch to flutter user and get dependencies
-USER flutter
-RUN flutter pub get
-
-# Switch back to root to copy remaining files
-USER root
-COPY . .
-RUN chown -R flutter:flutter /app
-
-# Expose port for Flutter web (if needed)
+# Expose ports
 EXPOSE 3000
 
 # Use entrypoint script
